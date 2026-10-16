@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>台北101 (TAIPEI 101) 高精細3Dインタラクティブモデル - GitHub Pages公開版</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Three.js & OrbitControls (CDN経由・HTTPS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <!-- 3Dキャンバスコンテナ -->
+  <div id="canvas-container"></div>
+
+  <!-- 左上：タイトル＆建築スペック情報 -->
+  <header class="hud-panel title-panel">
+    <div class="badge-row">
+      <span class="badge">HIGH-PRECISION 3D MODEL</span>
+      <span class="badge badge-unofficial">UNOFFICIAL FAN ART</span>
+    </div>
+    <h1>台北101 <span class="sub">TAIPEI 101</span></h1>
+    <p class="desc">マウスドラッグで360°回転・ホイールでズーム・右ドラッグで平行移動</p>
+    <div class="specs-grid">
+      <div class="spec-item">
+        <span class="spec-label">尖塔高</span>
+        <span class="spec-val">508.0 m</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">軒高</span>
+        <span class="spec-val">449.2 m</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">階数</span>
+        <span class="spec-val">地上101階 / 地下5階</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">構造特徴</span>
+        <span class="spec-val">8節の「斗」・古銭・如意・TMD</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 右側：コントロールパネル -->
+  <aside class="hud-panel control-panel" id="control-panel">
+    <div class="panel-header">
+      <h2>ビュー＆ディテール制御</h2>
+      <button id="toggle-panel-btn" class="icon-btn" title="パネルを折りたたむ">−</button>
+    </div>
+
+    <div class="panel-body" id="panel-body">
+      <!-- カメラプリセット -->
+      <section class="control-group">
+        <h3>📷 カメラアングル（視点プリセット）</h3>
+        <div class="btn-grid">
+          <button class="preset-btn active" data-cam="photo2">正面全景（写真2再現）</button>
+          <button class="preset-btn" data-cam="photo1">象山展望台（写真1再現）</button>
+          <button class="preset-btn" data-cam="low">見上げローアングル</button>
+          <button class="preset-btn" data-cam="coin">古銭＆基壇部アップ</button>
+          <button class="preset-btn" data-cam="ruyi">竹の節＆如意ディテール</button>
+          <button class="preset-btn" data-cam="spire">頂上スパイア＆91F展望台</button>
+          <button class="preset-btn" data-cam="damper">黄金ウィンド・ダンパー</button>
+          <button class="preset-btn" data-cam="top">真上からの平面断面(W字)</button>
+        </div>
+      </section>
+
+      <!-- 時間帯・天候 -->
+      <section class="control-group">
+        <h3>☀️ 時間帯・ライティング</h3>
+        <div class="segmented-control">
+          <button class="time-btn active" data-time="day">快晴（写真再現）</button>
+          <button class="time-btn" data-time="sunset">夕景（マジックアワー）</button>
+          <button class="time-btn" data-time="night">夜景（ライトアップ）</button>
+        </div>
+        <div class="slider-row">
+          <label for="sun-angle">太陽の向き</label>
+          <input type="range" id="sun-angle" min="0" max="360" value="135" />
+          <span id="sun-angle-val">135°</span>
+        </div>
+      </section>
+
+      <!-- 夜景時の曜日別カラー（夜景選択時にも連動） -->
+      <section class="control-group" id="night-color-group">
+        <h3>🌈 台北101 曜日別ライトアップ色</h3>
+        <div class="color-pills">
+          <button class="color-pill" data-day="mon" style="--c:#ff3b3b" title="月曜：赤">月</button>
+          <button class="color-pill" data-day="tue" style="--c:#ff9500" title="火曜：橙">火</button>
+          <button class="color-pill" data-day="wed" style="--c:#ffd60a" title="水曜：黄">水</button>
+          <button class="color-pill active" data-day="thu" style="--c:#30d158" title="木曜：緑">木</button>
+          <button class="color-pill" data-day="fri" style="--c:#0a84ff" title="金曜：青">金</button>
+          <button class="color-pill" data-day="sat" style="--c:#5e5ce6" title="土曜：藍">土</button>
+          <button class="color-pill" data-day="sun" style="--c:#bf5af2" title="日曜：紫">日</button>
+        </div>
+      </section>
+
+      <!-- 構造・表示オプション -->
+      <section class="control-group">
+        <h3>🔍 構造・周辺環境オプション</h3>
+        <div class="slider-row">
+          <label for="glass-opacity">外装ガラス不透明度（内部透視）</label>
+          <input type="range" id="glass-opacity" min="15" max="100" value="100" />
+          <span id="glass-opacity-val">100%</span>
+        </div>
+
+        <div class="toggle-list">
+          <label class="toggle-item">
+            <input type="checkbox" id="toggle-city" checked />
+            <span>周辺の信義区街並み・台北南山広場・山並み</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="toggle-xray" />
+            <span>87F-92F 黄金ウィンド・ダンパー(TMD) 透視</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="toggle-annotations" checked />
+            <span>建築部位ラベル（解説マーカー）を表示</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="toggle-autorotate" />
+            <span>自動ターンテーブル回転</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="toggle-wireframe" />
+            <span>ワイヤーフレーム表示（ポリゴン構造確認）</span>
+          </label>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <!-- 3D空間上のアノテーション（建築ディテール解説ラベル）レイヤー -->
+  <div id="annotations-container"></div>
+
+  <!-- 下部：操作ヘルプ・ステータス ＆ 免責条項 (Disclaimer) -->
+  <footer class="hud-panel footer-panel">
+    <div class="footer-top-row">
+      <div class="controls-hint">
+        <span>🖱️ <b>左ドラッグ:</b> 360°回転</span>
+        <span>🖱️ <b>右ドラッグ:</b> 視点移動</span>
+        <span>🖱️ <b>ホイール:</b> ズーム</span>
+        <span>💡 <b>ラベルクリック:</b> 該当部位へフォーカス</span>
+      </div>
+      <div class="model-stats" id="model-stats">読み込み中...</div>
+    </div>
+    <!-- 免責注記 (Disclaimer) -->
+    <div class="disclaimer-text">
+      ※ 本サイトは個人による研究・学習およびポートフォリオ目的の非公式3Dモデルプロジェクト（ファンアート）です。台北101（Taipei Financial Center Corp.）および関係各社とは一切関係ありません。
+    </div>
+  </footer>
+
+  <script src="taipei101.js"></script>
+</body>
+</html>
